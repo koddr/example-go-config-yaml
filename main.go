@@ -10,9 +10,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Define var for config path
 var configPath string
 
-// Config struct
+// Config struct for webapp config
 type Config struct {
 	Server struct {
 		Host    string `yaml:"host"`
@@ -25,7 +26,7 @@ type Config struct {
 	} `yaml:"server"`
 }
 
-// NewConfig returns a new Config
+// NewConfig returns a new decoded Config struct
 func NewConfig(configPath string) *Config {
 	// Create config structure
 	config := &Config{}
@@ -48,15 +49,13 @@ func NewConfig(configPath string) *Config {
 	return config
 }
 
+// Function will be run before main()
 func init() {
 	// Looking for config flag
 	flag.StringVar(&configPath, "config", "config.yml", "path to config file")
 }
 
 func main() {
-	// Parse a command line arguments
-	flag.Parse()
-
 	// Create new config instance
 	config := NewConfig(configPath)
 
