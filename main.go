@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -59,9 +60,16 @@ func main() {
 	// Create new config instance
 	config := NewConfig(configPath)
 
+	// Create router and define routes
+	router := http.NewServeMux()
+	router.HandleFunc("/welcome", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)
+	})
+
 	// Define server options
 	server := &http.Server{
 		Addr:         config.Server.Host + ":" + config.Server.Port,
+		Handler:      router,
 		ReadTimeout:  time.Duration(config.Server.Timeout.Read) * time.Second,
 		WriteTimeout: time.Duration(config.Server.Timeout.Write) * time.Second,
 		IdleTimeout:  time.Duration(config.Server.Timeout.Idle) * time.Second,
