@@ -1,5 +1,11 @@
 # macOS
 .DS_Store
 
+# vscode
+.vscode/
+
 # Go dev build
 build/
+
+# coverage file
+*.out
