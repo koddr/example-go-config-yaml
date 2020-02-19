@@ -29,10 +29,10 @@ type Config struct {
 			// Write is the amount of time to wait until an HTTP server write opperation is cancelled
 			Write time.Duration `yaml:"write"`
 
-			// Read is the ammout of time to wait until an HTTP server read operation is cancelled
+			// Read is the amount of time to wait until an HTTP server read operation is cancelled
 			Read time.Duration `yaml:"read"`
 
-			// Read is the ammout of time to wait until an IDLE HTTP session is closed
+			// Read is the amount of time to wait until an IDLE HTTP session is closed
 			Idle time.Duration `yaml:"idle"`
 		} `yaml:"timeout"`
 	} `yaml:"server"`
@@ -78,10 +78,10 @@ func ParseFlags() (string, error) {
 	// String that contains the configured configuration path
 	var configPath string
 
-	// Set up a CLI flag called "-config" to allow users to supply the configurationg file
+	// Set up a CLI flag called "-config" to allow users to supply the configuration file
 	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
 
-	// Acutally parse the flags
+	// Actually parse the flags
 	flag.Parse()
 
 	// Validate the path first
@@ -89,7 +89,7 @@ func ParseFlags() (string, error) {
 		return "", err
 	}
 
-	// Return the configuation path
+	// Return the configuration path
 	return configPath, nil
 }
 
@@ -110,7 +110,8 @@ func (config Config) Run() {
 	// Set up a channel to listen to for interrupt signals.
 	var runChan = make(chan os.Signal, 1)
 
-	// Set up a context to allow for graceful server shutdowns in the event of an OS interrupt (defers the cancel just in case).
+	// Set up a context to allow for graceful server shutdowns in the event of an OS interrupt
+	// (defers the cancel just in case).
 	ctx, cancel := context.WithTimeout(context.Background(), config.Server.Timeout.Server)
 	defer cancel()
 
@@ -127,13 +128,13 @@ func (config Config) Run() {
 	signal.Notify(runChan, os.Interrupt, syscall.SIGTSTP)
 
 	// Alert the user that the server is starting and run the server on a new goroutine.
-	log.Printf("server is starting on %s\n", server.Addr)
+	log.Printf("Server is starting on %s\n", server.Addr)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			if err == http.ErrServerClosed {
-				// Normal iterrupt operation, ignore
+				// Normal interrupt operation, ignore
 			} else {
-				log.Fatalf("server failed to start due to err: %+v", err)
+				log.Fatalf("Server failed to start due to err: %v", err)
 			}
 		}
 	}()
@@ -142,14 +143,15 @@ func (config Config) Run() {
 	// assign to variable so we can let the user know why the server is shutting down.
 	interrupt := <-runChan
 
-	// If we get one of the pre-prescribed syscalls, gracefully terminate the server while alerting the user.
-	log.Printf("server is shutting down due to %+v\n", interrupt)
+	// If we get one of the pre-prescribed syscalls, gracefully terminate the server
+	// while alerting the user.
+	log.Printf("Server is shutting down due to %+v\n", interrupt)
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("server was unable to gracefully shutdown due to err: %+v", err)
+		log.Fatalf("Server was unable to gracefully shutdown due to err: %+v", err)
 	}
 }
 
-// main should be as small as possible and do as little as possible by convention
+// Func main should be as small as possible and do as little as possible by convention
 func main() {
 	// Generate our config based on the config supplied by the user in the flags
 	cfgPath, err := ParseFlags()

@@ -4,6 +4,9 @@
 # vscode
 .vscode/
 
+# GoLand
+.idea/
+
 # Go dev build
 build/
 
