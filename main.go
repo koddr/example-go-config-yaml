@@ -23,16 +23,20 @@ type Config struct {
 		// Port is the local machine TCP Port to bind the HTTP Server to
 		Port    string `yaml:"port"`
 		Timeout struct {
-			// Server is the general server timeout to use for graceful shutdowns
+			// Server is the general server timeout to use
+			// for graceful shutdowns
 			Server time.Duration `yaml:"server"`
 
-			// Write is the amount of time to wait until an HTTP server write opperation is cancelled
+			// Write is the amount of time to wait until an HTTP server
+			// write opperation is cancelled
 			Write time.Duration `yaml:"write"`
 
-			// Read is the amount of time to wait until an HTTP server read operation is cancelled
+			// Read is the amount of time to wait until an HTTP server
+			// read operation is cancelled
 			Read time.Duration `yaml:"read"`
 
-			// Read is the amount of time to wait until an IDLE HTTP session is closed
+			// Read is the amount of time to wait
+			// until an IDLE HTTP session is closed
 			Idle time.Duration `yaml:"idle"`
 		} `yaml:"timeout"`
 	} `yaml:"server"`
@@ -61,7 +65,8 @@ func NewConfig(configPath string) (*Config, error) {
 	return config, nil
 }
 
-// ValidateConfigPath just makes sure that the path provided is a file that can be read
+// ValidateConfigPath just makes sure, that the path provided is a file,
+// that can be read
 func ValidateConfigPath(path string) error {
 	s, err := os.Stat(path)
 	if err != nil {
@@ -73,12 +78,14 @@ func ValidateConfigPath(path string) error {
 	return nil
 }
 
-// ParseFlags will create and parse the CLI flags and return the path to be used elsewhere
+// ParseFlags will create and parse the CLI flags
+// and return the path to be used elsewhere
 func ParseFlags() (string, error) {
 	// String that contains the configured configuration path
 	var configPath string
 
-	// Set up a CLI flag called "-config" to allow users to supply the configuration file
+	// Set up a CLI flag called "-config" to allow users
+	// to supply the configuration file
 	flag.StringVar(&configPath, "config", "./config.yml", "path to config file")
 
 	// Actually parse the flags
@@ -107,15 +114,18 @@ func NewRouter() *http.ServeMux {
 
 // Run will run the HTTP Server
 func (config Config) Run() {
-	// Set up a channel to listen to for interrupt signals.
+	// Set up a channel to listen to for interrupt signals
 	var runChan = make(chan os.Signal, 1)
 
-	// Set up a context to allow for graceful server shutdowns in the event of an OS interrupt
-	// (defers the cancel just in case).
-	ctx, cancel := context.WithTimeout(context.Background(), config.Server.Timeout.Server)
+	// Set up a context to allow for graceful server shutdowns in the event
+	// of an OS interrupt (defers the cancel just in case)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		config.Server.Timeout.Server,
+	)
 	defer cancel()
 
-	// Define server options.
+	// Define server options
 	server := &http.Server{
 		Addr:         config.Server.Host + ":" + config.Server.Port,
 		Handler:      NewRouter(),
@@ -124,11 +134,13 @@ func (config Config) Run() {
 		IdleTimeout:  config.Server.Timeout.Idle * time.Second,
 	}
 
-	// Handle ctrl+c/ctrl+x interrupt.
+	// Handle ctrl+c/ctrl+x interrupt
 	signal.Notify(runChan, os.Interrupt, syscall.SIGTSTP)
 
-	// Alert the user that the server is starting and run the server on a new goroutine.
+	// Alert the user that the server is starting
 	log.Printf("Server is starting on %s\n", server.Addr)
+
+	// Run the server on a new goroutine
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			if err == http.ErrServerClosed {
@@ -139,12 +151,12 @@ func (config Config) Run() {
 		}
 	}()
 
-	// Block on this channel listeninf for those previously defined syscalls.
-	// assign to variable so we can let the user know why the server is shutting down.
+	// Block on this channel listeninf for those previously defined syscalls assign
+	// to variable so we can let the user know why the server is shutting down
 	interrupt := <-runChan
 
 	// If we get one of the pre-prescribed syscalls, gracefully terminate the server
-	// while alerting the user.
+	// while alerting the user
 	log.Printf("Server is shutting down due to %+v\n", interrupt)
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server was unable to gracefully shutdown due to err: %+v", err)
@@ -153,7 +165,8 @@ func (config Config) Run() {
 
 // Func main should be as small as possible and do as little as possible by convention
 func main() {
-	// Generate our config based on the config supplied by the user in the flags
+	// Generate our config based on the config supplied
+	// by the user in the flags
 	cfgPath, err := ParseFlags()
 	if err != nil {
 		log.Fatal(err)
