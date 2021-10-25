@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -117,14 +116,6 @@ func (config Config) Run() {
 	// Set up a channel to listen to for interrupt signals
 	var runChan = make(chan os.Signal, 1)
 
-	// Set up a context to allow for graceful server shutdowns in the event
-	// of an OS interrupt (defers the cancel just in case)
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		config.Server.Timeout.Server,
-	)
-	defer cancel()
-
 	// Define server options
 	server := &http.Server{
 		Addr:         config.Server.Host + ":" + config.Server.Port,
@@ -135,7 +126,7 @@ func (config Config) Run() {
 	}
 
 	// Handle ctrl+c/ctrl+x interrupt
-	signal.Notify(runChan, os.Interrupt, syscall.SIGTSTP)
+	signal.Notify(runChan, os.Interrupt)
 
 	// Alert the user that the server is starting
 	log.Printf("Server is starting on %s\n", server.Addr)
@@ -154,6 +145,14 @@ func (config Config) Run() {
 	// Block on this channel listeninf for those previously defined syscalls assign
 	// to variable so we can let the user know why the server is shutting down
 	interrupt := <-runChan
+
+	// Set up a context to allow for graceful server shutdowns in the event
+	// of an OS interrupt (defers the cancel just in case)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		config.Server.Timeout.Server,
+	)
+	defer cancel()
 
 	// If we get one of the pre-prescribed syscalls, gracefully terminate the server
 	// while alerting the user
